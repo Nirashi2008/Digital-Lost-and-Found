@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import api from "../services/api";
@@ -13,6 +14,10 @@ function ReportFound() {
     found_date: "",
   });
 
+  const [image, setImage] = useState(null);
+  const [preview, setPreview] = useState("");
+  const [submitting, setSubmitting] = useState(false);
+
   const handleChange = (e) => {
     setForm({
       ...form,
@@ -20,21 +25,76 @@ function ReportFound() {
     });
   };
 
+  const handleImageChange = (e) => {
+    const file = e.target.files?.[0];
+
+    if (!file) return;
+
+    if (!file.type.startsWith("image/")) {
+      alert("Please select an image file.");
+      e.target.value = "";
+      return;
+    }
+
+    if (file.size > 5 * 1024 * 1024) {
+      alert("Image size must be less than 5 MB.");
+      e.target.value = "";
+      return;
+    }
+
+    if (preview) URL.revokeObjectURL(preview);
+
+    setImage(file);
+    setPreview(URL.createObjectURL(file));
+  };
+
+  const removeImage = () => {
+    if (preview) URL.revokeObjectURL(preview);
+
+    setImage(null);
+    setPreview("");
+
+    const input = document.getElementById("found-item-image");
+    if (input) input.value = "";
+  };
+
   const submit = async (e) => {
     e.preventDefault();
 
+    if (submitting) return;
+
+    const data = new FormData();
+
+    Object.entries(form).forEach(([key, value]) => {
+      data.append(key, value);
+    });
+
+    if (image) {
+      data.append("image", image);
+    }
+
+    setSubmitting(true);
+
     try {
-      await api.post("/found-items/", form);
+      await api.post("/found-items/", data);
 
       alert("Found item reported successfully!");
       navigate("/found-items");
     } catch (error) {
+      console.error("Found item report error:", error.response?.data || error);
+
       if (error.response?.status === 401) {
         alert("Please login first.");
         navigate("/login");
       } else {
-        alert("Something went wrong.");
+        alert(
+          error.response?.data
+            ? JSON.stringify(error.response.data)
+            : "Something went wrong. Please try again."
+        );
       }
+    } finally {
+      setSubmitting(false);
     }
   };
 
@@ -47,6 +107,7 @@ function ReportFound() {
         <label>Item Name</label>
         <input
           name="item_name"
+          value={form.item_name}
           placeholder="e.g. Blue Water Bottle"
           onChange={handleChange}
           required
@@ -70,6 +131,7 @@ function ReportFound() {
         <label>Description</label>
         <textarea
           name="description"
+          value={form.description}
           placeholder="Describe the item..."
           onChange={handleChange}
           required
@@ -78,6 +140,7 @@ function ReportFound() {
         <label>Found Location</label>
         <input
           name="location"
+          value={form.location}
           placeholder="e.g. College Library"
           onChange={handleChange}
           required
@@ -87,12 +150,39 @@ function ReportFound() {
         <input
           type="date"
           name="found_date"
+          value={form.found_date}
           onChange={handleChange}
           required
         />
 
-        <button className="primary-btn full-btn">
-          Submit Found Report
+        <label>Upload Item Image (Optional)</label>
+        <input
+          id="found-item-image"
+          type="file"
+          accept="image/*"
+          onChange={handleImageChange}
+        />
+
+        {preview && (
+          <div className="image-preview">
+            <img src={preview} alt="Found item preview" />
+
+            <button
+              type="button"
+              className="remove-image-btn"
+              onClick={removeImage}
+            >
+              Remove Image
+            </button>
+          </div>
+        )}
+
+        <button
+          type="submit"
+          className="primary-btn full-btn"
+          disabled={submitting}
+        >
+          {submitting ? "Submitting..." : "Submit Found Report"}
         </button>
       </form>
     </div>

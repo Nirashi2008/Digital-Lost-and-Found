@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import api from "../services/api";
@@ -13,6 +14,10 @@ function ReportLost() {
     lost_date: "",
   });
 
+  const [image, setImage] = useState(null);
+  const [preview, setPreview] = useState("");
+  const [submitting, setSubmitting] = useState(false);
+
   const handleChange = (e) => {
     setForm({
       ...form,
@@ -20,23 +25,64 @@ function ReportLost() {
     });
   };
 
+  const handleImageChange = (e) => {
+    const file = e.target.files?.[0];
+
+    if (!file) return;
+
+    if (!file.type.startsWith("image/")) {
+      alert("Please select an image file.");
+      e.target.value = "";
+      return;
+    }
+
+    if (file.size > 5 * 1024 * 1024) {
+      alert("Image size must be less than 5 MB.");
+      e.target.value = "";
+      return;
+    }
+
+    setImage(file);
+    setPreview(URL.createObjectURL(file));
+  };
+
   const submit = async (e) => {
     e.preventDefault();
 
+    if (submitting) return;
+
+    const data = new FormData();
+
+    Object.entries(form).forEach(([key, value]) => {
+      data.append(key, value);
+    });
+
+    if (image) {
+      data.append("image", image);
+    }
+
+    setSubmitting(true);
+
     try {
-      await api.post("/lost-items/", form);
+      await api.post("/lost-items/", data);
 
       alert("Lost item reported successfully!");
       navigate("/lost-items");
     } catch (error) {
-      console.log(error.response?.data);
+      console.error("Lost item submission failed:", error.response?.data || error);
 
       if (error.response?.status === 401) {
         alert("Please login first.");
         navigate("/login");
       } else {
-        alert("Something went wrong.");
+        alert(
+          error.response?.data
+            ? JSON.stringify(error.response.data)
+            : "Something went wrong. Please try again."
+        );
       }
+    } finally {
+      setSubmitting(false);
     }
   };
 
@@ -50,6 +96,7 @@ function ReportLost() {
         <input
           name="item_name"
           placeholder="e.g. Black Wallet"
+          value={form.item_name}
           onChange={handleChange}
           required
         />
@@ -57,8 +104,9 @@ function ReportLost() {
         <label>Category</label>
         <select
           name="category"
-          onChange={handleChange}
           value={form.category}
+          onChange={handleChange}
+          required
         >
           <option value="electronics">Electronics</option>
           <option value="documents">Documents</option>
@@ -73,6 +121,7 @@ function ReportLost() {
         <textarea
           name="description"
           placeholder="Describe your item..."
+          value={form.description}
           onChange={handleChange}
           required
         />
@@ -81,6 +130,7 @@ function ReportLost() {
         <input
           name="location"
           placeholder="e.g. College Canteen"
+          value={form.location}
           onChange={handleChange}
           required
         />
@@ -89,12 +139,53 @@ function ReportLost() {
         <input
           type="date"
           name="lost_date"
+          value={form.lost_date}
           onChange={handleChange}
           required
         />
 
-        <button className="primary-btn full-btn">
-          Submit Lost Report
+        <label>Item Photo (optional)</label>
+        <input
+          type="file"
+          accept="image/*"
+          onChange={handleImageChange}
+        />
+
+        {preview && (
+          <div className="image-preview">
+            <img
+              src={preview}
+              alt="Lost item preview"
+              style={{
+                width: "100%",
+                maxWidth: "320px",
+                maxHeight: "240px",
+                objectFit: "contain",
+                marginTop: "12px",
+                borderRadius: "12px",
+              }}
+            />
+
+            <button
+              type="button"
+              className="secondary-btn"
+              onClick={() => {
+                URL.revokeObjectURL(preview);
+                setPreview("");
+                setImage(null);
+              }}
+            >
+              Remove Photo
+            </button>
+          </div>
+        )}
+
+        <button
+          type="submit"
+          className="primary-btn full-btn"
+          disabled={submitting}
+        >
+          {submitting ? "Submitting..." : "Submit Lost Report"}
         </button>
       </form>
     </div>

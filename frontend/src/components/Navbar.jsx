@@ -1,4 +1,6 @@
+
 import { Link, useNavigate } from "react-router-dom";
+import Notifications from "./Notifications";
 
 function Navbar() {
   const navigate = useNavigate();
@@ -8,12 +10,13 @@ function Navbar() {
     localStorage.removeItem("access_token");
     localStorage.removeItem("refresh_token");
     navigate("/login");
+    window.location.reload();
   };
 
   return (
     <nav className="navbar">
       <Link to="/" className="logo">
-        🔎 Lost<span>&</span>Found
+        🔎 Lost<span>&amp;</span>Found
       </Link>
 
       <div className="nav-links">
@@ -25,6 +28,9 @@ function Navbar() {
           <>
             <Link to="/dashboard">Dashboard</Link>
             <Link to="/claims">My Claims</Link>
+
+            <Notifications />
+
             <button onClick={logout} className="logout-btn">
               Logout
             </button>
