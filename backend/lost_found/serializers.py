@@ -1,5 +1,6 @@
+
 from rest_framework import serializers
-from .models import LostItem, FoundItem, Claim
+from .models import LostItem, FoundItem, Claim, Notification
 
 
 class LostItemSerializer(serializers.ModelSerializer):
@@ -41,3 +42,23 @@ class ClaimSerializer(serializers.ModelSerializer):
             )
 
         return value
+
+
+class NotificationSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Notification
+        fields = [
+            "id",
+            "title",
+            "message",
+            "link",
+            "is_read",
+            "created_at",
+        ]
+        read_only_fields = [
+            "id",
+            "title",
+            "message",
+            "link",
+            "created_at",
+        ]
