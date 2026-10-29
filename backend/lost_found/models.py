@@ -29,19 +29,19 @@ class LostItem(models.Model):
     image = models.ImageField(
         upload_to="lost_items/",
         blank=True,
-        null=True
+        null=True,
     )
 
     reported_by = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         on_delete=models.CASCADE,
-        related_name="lost_items"
+        related_name="lost_items",
     )
 
     status = models.CharField(
         max_length=20,
         choices=STATUS_CHOICES,
-        default="active"
+        default="active",
     )
 
     created_at = models.DateTimeField(auto_now_add=True)
@@ -76,19 +76,19 @@ class FoundItem(models.Model):
     image = models.ImageField(
         upload_to="found_items/",
         blank=True,
-        null=True
+        null=True,
     )
 
     reported_by = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         on_delete=models.CASCADE,
-        related_name="found_items"
+        related_name="found_items",
     )
 
     status = models.CharField(
         max_length=20,
         choices=STATUS_CHOICES,
-        default="available"
+        default="available",
     )
 
     created_at = models.DateTimeField(auto_now_add=True)
@@ -108,13 +108,13 @@ class Claim(models.Model):
     found_item = models.ForeignKey(
         FoundItem,
         on_delete=models.CASCADE,
-        related_name="claims"
+        related_name="claims",
     )
 
     claimed_by = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         on_delete=models.CASCADE,
-        related_name="claims"
+        related_name="claims",
     )
 
     message = models.TextField()
@@ -122,13 +122,31 @@ class Claim(models.Model):
     status = models.CharField(
         max_length=20,
         choices=STATUS_CHOICES,
-        default="pending"
+        default="pending",
+    )
+
+    # Principal who reviewed the claim
+    reviewed_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="reviewed_claims",
+    )
+
+    # Date and time when the claim was reviewed
+    reviewed_at = models.DateTimeField(
+        null=True,
+        blank=True,
     )
 
     created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
-        return f"{self.claimed_by.username} - {self.found_item.item_name}"
+        return (
+            f"{self.claimed_by.username} - "
+            f"{self.found_item.item_name}"
+        )
 
 
 class Notification(models.Model):
@@ -136,7 +154,7 @@ class Notification(models.Model):
     recipient = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         on_delete=models.CASCADE,
-        related_name="notifications"
+        related_name="notifications",
     )
 
     title = models.CharField(max_length=200)

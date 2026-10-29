@@ -26,6 +26,8 @@ function Navbar() {
 
         {token ? (
           <>
+            <Link to="/report-lost">Report Lost</Link>
+            <Link to="/report-found">Report Found</Link>
             <Link to="/dashboard">Dashboard</Link>
             <Link to="/claims">My Claims</Link>
 
