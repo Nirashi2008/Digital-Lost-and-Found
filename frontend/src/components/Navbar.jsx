@@ -7,10 +7,12 @@ function Navbar() {
   const token = localStorage.getItem("access_token");
 
   const logout = () => {
+    // Remove authentication tokens
     localStorage.removeItem("access_token");
     localStorage.removeItem("refresh_token");
-    navigate("/login");
-    window.location.reload();
+
+    // Redirect to login without reloading the website
+    navigate("/login", { replace: true });
   };
 
   return (
@@ -40,6 +42,7 @@ function Navbar() {
         ) : (
           <>
             <Link to="/login">Login</Link>
+
             <Link to="/register" className="nav-register">
               Register
             </Link>
